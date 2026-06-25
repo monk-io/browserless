@@ -1,0 +1,146 @@
+namespace: browserless
+
+stack-app:
+  defines: runnable
+  inherits: browserless/base
+  metadata:
+    name: Browserless Standalone App
+    description: |
+      Production-oriented Browserless service with authentication token set and
+      no host port published. The HTTP/WebSocket API is intended to be exposed
+      only through Monk ingress in ingress-capable environments.
+    tags: browserless, chromium, puppeteer, playwright, standalone, production
+    website: https://www.browserless.io/
+    source: https://github.com/browserless/browserless
+    publisher: monk.io
+    icon: https://raw.githubusercontent.com/browserless/browserless/main/assets/logo.svg
+    private: false
+  variables:
+    token:
+      type: string
+      env: TOKEN
+      value: <- random-uuid
+      description: Sensitive generated Browserless token for the standalone stack. Inheriting production deployments needing stable credentials should set secret("browserless-token").
+    concurrent:
+      type: int
+      env: CONCURRENT
+      value: 10
+      description: Browser session concurrency limit for the production-oriented standalone stack.
+    queued:
+      type: int
+      env: QUEUED
+      value: 20
+      description: Browser session queue depth for the production-oriented standalone stack.
+    timeout:
+      type: int
+      env: TIMEOUT
+      value: 300000
+      description: Browser session timeout in milliseconds for the production-oriented standalone stack.
+    storage-volume-name:
+      type: string
+      value: browserless-stack
+      description: Monk volume subdirectory used by the production-oriented standalone stack.
+  services:
+    http:
+      container: browserless
+      port: <- $port
+      protocol: tcp
+      publish: false
+      description: Private Browserless HTTP and WebSocket API service intended for authenticated ingress or Monk-network clients.
+  ingress-routes:
+    browserless:
+      path-prefix: /
+  checks:
+    readiness:
+      code: http-get-service("browserless/stack-app", "http", "/docs/") get-member("status") 200 equal?
+      period: 10
+      initialDelay: 20
+      attempts: 30
+
+stack:
+  defines: process-group
+  metadata:
+    name: Browserless Standalone Stack
+    description: |
+      Secure production-oriented standalone Browserless stack. It uses a
+      generated authentication token and exposes no host port; internet exposure
+      is intended only through Monk ingress.
+    tags: browserless, chromium, puppeteer, playwright, standalone, production
+    website: https://www.browserless.io/
+    source: https://github.com/browserless/browserless
+    publisher: monk.io
+    icon: https://raw.githubusercontent.com/browserless/browserless/main/assets/logo.svg
+    private: false
+  runnable-list:
+    - browserless/stack-app
+
+stack-local-app:
+  defines: runnable
+  inherits: browserless/base
+  metadata:
+    name: Browserless Local Standalone App
+    description: |
+      Local verification flavor of the standalone Browserless stack. It keeps
+      the generated token and publishes a non-privileged host port so local HTTP
+      checks can prove the service responds outside the Monk deployment.
+    tags: browserless, chromium, puppeteer, playwright, standalone, local
+    website: https://www.browserless.io/
+    source: https://github.com/browserless/browserless
+    publisher: monk.io
+    icon: https://raw.githubusercontent.com/browserless/browserless/main/assets/logo.svg
+    private: false
+  variables:
+    token:
+      type: string
+      env: TOKEN
+      value: <- random-uuid
+      description: Sensitive generated Browserless token for local standalone verification. Inheriting deployments needing stable credentials should set secret("browserless-token").
+    concurrent:
+      type: int
+      env: CONCURRENT
+      value: 2
+      description: Low local concurrency limit for standalone local verification.
+    queued:
+      type: int
+      env: QUEUED
+      value: 4
+      description: Low local queue depth for standalone local verification.
+    storage-volume-name:
+      type: string
+      value: browserless-stack-local
+      description: Monk volume subdirectory used by the local standalone flavor.
+    host-port:
+      type: int
+      value: 8311
+      description: Non-privileged host port published by the local standalone flavor.
+  services:
+    http:
+      container: browserless
+      port: <- $port
+      protocol: tcp
+      publish: true
+      host-port: <- $host-port
+      description: Published local Browserless HTTP and WebSocket API endpoint for standalone smoke tests.
+  checks:
+    readiness:
+      code: http-get-service("browserless/stack-local-app", "http", "/docs/") get-member("status") 200 equal?
+      period: 10
+      initialDelay: 20
+      attempts: 30
+
+stack-local:
+  defines: process-group
+  metadata:
+    name: Browserless Local Standalone Stack
+    description: |
+      Local flavor of the standalone Browserless stack used for verification.
+      It publishes a localhost port while preserving Browserless token
+      authentication for automation endpoints.
+    tags: browserless, chromium, puppeteer, playwright, standalone, local
+    website: https://www.browserless.io/
+    source: https://github.com/browserless/browserless
+    publisher: monk.io
+    icon: https://raw.githubusercontent.com/browserless/browserless/main/assets/logo.svg
+    private: false
+  runnable-list:
+    - browserless/stack-local-app
