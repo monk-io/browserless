@@ -1,0 +1,82 @@
+namespace: browserless
+
+base:
+  defines: runnable
+  metadata:
+    name: Browserless
+    description: |
+      Reusable Browserless headless browser service component using the public
+      ghcr.io/browserless/chromium image. Browserless is self-contained and does
+      not require a database, queue, object store, or other backing runtime
+      dependency for the core open-source deployment. Inheriting templates can
+      expose the HTTP/WebSocket service to Puppeteer, Playwright, or other
+      browser automation workloads over Monk connections.
+    tags: browserless, chromium, chrome, puppeteer, playwright, browser-automation, component
+    website: https://www.browserless.io/
+    source: https://github.com/browserless/browserless
+    publisher: monk.io
+    icon: https://raw.githubusercontent.com/browserless/browserless/main/assets/logo.svg
+    private: false
+  variables:
+    browserless-image:
+      type: string
+      value: ghcr.io/browserless/chromium
+      description: Public Browserless Docker image repository. Override with ghcr.io/browserless/firefox or ghcr.io/browserless/multi for other browser engines.
+    browserless-image-tag:
+      type: string
+      value: latest
+      description: Public Browserless image tag to run.
+    port:
+      type: int
+      env: PORT
+      value: 3000
+      description: HTTP and WebSocket port Browserless listens on inside the container.
+    token:
+      type: string
+      env: TOKEN
+      value: ""
+      description: Sensitive Browserless authentication token. Inheriting templates must set this to a generated value or secret("browserless-token") using a plain secret name.
+    concurrent:
+      type: int
+      env: CONCURRENT
+      value: 10
+      description: Maximum concurrent browser sessions Browserless should allow.
+    queued:
+      type: int
+      env: QUEUED
+      value: 20
+      description: Maximum queued browser session requests before Browserless rejects new work.
+    timeout:
+      type: int
+      env: TIMEOUT
+      value: 300000
+      description: Browser session timeout in milliseconds.
+    connection-timeout:
+      type: int
+      env: CONNECTION_TIMEOUT
+      value: 30000
+      description: Maximum time in milliseconds Browserless waits for a browser connection to establish.
+    storage-volume-name:
+      type: string
+      value: browserless
+      description: Monk volume subdirectory used for Browserless runtime data and browser cache.
+  containers:
+    browserless:
+      image: <- $browserless-image
+      image-tag: <- $browserless-image-tag
+      restart: unless-stopped
+      paths:
+        - <- `${monk-volume-path}/${storage-volume-name}:/usr/src/app/user-data`
+  services:
+    http:
+      container: browserless
+      port: <- $port
+      protocol: tcp
+      publish: false
+      description: Private Browserless HTTP and WebSocket API service for browser automation clients.
+  checks:
+    readiness:
+      code: http-get-service("browserless/base", "http", "/docs/") get-member("status") 200 equal?
+      period: 10
+      initialDelay: 20
+      attempts: 30

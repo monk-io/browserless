@@ -1,0 +1,4 @@
+LOAD browserless.yaml
+LOAD browserless-example.yaml
+LOAD browserless-stack.yaml
+ENTRY browserless/stack-local

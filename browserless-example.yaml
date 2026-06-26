@@ -1,0 +1,73 @@
+namespace: browserless
+
+example-app:
+  defines: runnable
+  inherits: browserless/base
+  metadata:
+    name: Browserless Component Example App
+    description: |
+      Component demonstration that inherits the reusable Browserless base and
+      publishes a local host port for smoke testing. This example proves the
+      component can be consumed directly by automation clients without any
+      backing service.
+    tags: browserless, chromium, puppeteer, playwright, component, example, local
+    website: https://www.browserless.io/
+    source: https://github.com/browserless/browserless
+    publisher: monk.io
+    icon: https://raw.githubusercontent.com/browserless/browserless/main/assets/logo.svg
+    private: false
+  variables:
+    token:
+      type: string
+      env: TOKEN
+      value: <- random-uuid
+      description: Sensitive generated Browserless token for the component example. Inheriting deployments needing stable credentials should set secret("browserless-token").
+    concurrent:
+      type: int
+      env: CONCURRENT
+      value: 2
+      description: Low local concurrency limit for component example verification.
+    queued:
+      type: int
+      env: QUEUED
+      value: 4
+      description: Low local queue depth for component example verification.
+    storage-volume-name:
+      type: string
+      value: browserless-example
+      description: Monk volume subdirectory used by the component example.
+    host-port:
+      type: int
+      value: 8310
+      description: Non-privileged host port published for local component example verification.
+  services:
+    http:
+      container: browserless
+      port: <- $port
+      protocol: tcp
+      publish: true
+      host-port: <- $host-port
+      description: Published local Browserless HTTP and WebSocket API endpoint for component example smoke tests.
+  checks:
+    readiness:
+      code: http-get-service("browserless/example-app", "http", "/docs/") get-member("status") 200 equal?
+      period: 10
+      initialDelay: 20
+      attempts: 30
+
+example:
+  defines: process-group
+  metadata:
+    name: Browserless Component Example
+    description: |
+      Demonstrates Browserless as a reusable component by running the inherited
+      service with a generated token and a local published endpoint. No external
+      runtime dependency is required.
+    tags: browserless, chromium, component, example, local
+    website: https://www.browserless.io/
+    source: https://github.com/browserless/browserless
+    publisher: monk.io
+    icon: https://raw.githubusercontent.com/browserless/browserless/main/assets/logo.svg
+    private: false
+  runnable-list:
+    - browserless/example-app
