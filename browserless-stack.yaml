@@ -36,10 +36,6 @@ stack-app:
       env: TIMEOUT
       value: 300000
       description: Browser session timeout in milliseconds for the production-oriented standalone stack.
-    storage-volume-name:
-      type: string
-      value: browserless-stack
-      description: Monk volume subdirectory used by the production-oriented standalone stack.
   services:
     http:
       container: browserless
@@ -105,10 +101,6 @@ stack-local-app:
       env: QUEUED
       value: 4
       description: Low local queue depth for standalone local verification.
-    storage-volume-name:
-      type: string
-      value: browserless-stack-local
-      description: Monk volume subdirectory used by the local standalone flavor.
     host-port:
       type: int
       value: 8311
