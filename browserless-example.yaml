@@ -41,7 +41,6 @@ example-app:
       container: browserless
       port: <- $port
       protocol: tcp
-      publish: true
       host-port: <- $host-port
       description: Published local Browserless HTTP and WebSocket API endpoint for component example smoke tests.
   checks:
