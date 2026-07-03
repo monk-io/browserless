@@ -56,17 +56,17 @@ base:
       env: CONNECTION_TIMEOUT
       value: 30000
       description: Maximum time in milliseconds Browserless waits for a browser connection to establish.
-    storage-volume-name:
-      type: string
-      value: browserless
-      description: Monk volume subdirectory used for Browserless runtime data and browser cache.
   containers:
     browserless:
       image: <- $browserless-image
       image-tag: <- $browserless-image-tag
       restart: unless-stopped
-      paths:
-        - <- `${monk-volume-path}/${storage-volume-name}:/usr/src/app/user-data`
+      mounted-volumes:
+        user-data:
+          path: /usr/src/app/user-data
+  volumes:
+    user-data:
+      kind: local
   services:
     http:
       container: browserless

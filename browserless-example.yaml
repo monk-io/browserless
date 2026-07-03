@@ -32,10 +32,6 @@ example-app:
       env: QUEUED
       value: 4
       description: Low local queue depth for component example verification.
-    storage-volume-name:
-      type: string
-      value: browserless-example
-      description: Monk volume subdirectory used by the component example.
     host-port:
       type: int
       value: 8310
